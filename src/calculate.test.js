@@ -21,7 +21,8 @@ describe('factorial', () => {
 
 describe('product', ()=>{
 
-
+    // product(5) --> 120
+    // product(1) --> 1
 
 });
 
