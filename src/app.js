@@ -1,17 +1,14 @@
 import express from "express"
 import path from 'path';
-import { fileURLToPath } from 'url';
 import * as fs from "fs";
 
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
 const __dirname = '.';
 
 const app = express()
 
-
 app.use(express.static(path.join(__dirname, 'public')))
 app.use(express.json())
+
 app.get('/', function (req, res) {
     res.sendFile(`index.html`)
 })
@@ -52,25 +49,32 @@ app.get("/api/avatars/:id", (req, res)=>{
         res.send(avatar)
 })
 
-app.put("/api/avatars/:id", (req, res)=>{
-    const avatarID = parseInt(req.params.id)
-    const updateParams = req.body
-    console.log(updateParams)
-    console.log(` PUT /api/avatars/:${avatarID}`)
-    const avatarsArray =  JSON.parse(fs.readFileSync(`${__dirname}/avatars.json`, "utf8"))
-    const avatar = avatarsArray.find((av)=>av.id===avatarID)
-    if(!avatar)
-        res.sendStatus(404)
-    else{
-        avatarsArray[avatarsArray.indexOf(avatar)] = {...avatar, ...updateParams}
-        fs.writeFileSync(`${__dirname}/avatars.json`, JSON.stringify(avatarsArray), (err) => {
-            if (err) {
-                console.log("ERROR")
-            }
-        })
-        res.sendStatus(204)
-    }
+app.put("/api/avatars/:id", async (req, res)=>{
+    try {
+        const data = fs.readFileSync(`${__dirname}/public/avatars.json`);
+        const avatars = JSON.parse(data);
 
+        const avatar = avatars.find(avatar => avatar.id === parseInt(req.params.id));
+
+        if (!avatar) {
+            res.sendStatus(404)
+            return;
+        }
+
+        avatar.avatarName = req.body.avatarName;
+        avatar.childAge = parseInt(req.body.childAge);
+        avatar.skinColor = req.body.skinColor;
+        avatar.hairstyle = req.body.hairstyle;
+        avatar.headShape = req.body.headShape;
+        avatar.upperClothing = req.body.upperClothing;
+        avatar.lowerClothing = req.body.lowerClothing;
+
+        fs.writeFileSync(`${__dirname}/public/avatars.json`, JSON.stringify(avatars))
+
+        res.sendStatus(204);
+    } catch {
+        res.sendStatus(500)
+    }
 })
 
 app.delete("/api/avatars/:id", (req, res)=>{
