@@ -14,6 +14,7 @@ describe('avatar api', () => {
         "lowerClothing": "shorts"
     }
 
+
     test('create avatar', async () => {
         const createResponse = await request(app)
             .post('/api/avatars')
