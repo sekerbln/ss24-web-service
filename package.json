@@ -16,21 +16,8 @@
     "supertest": "^6.3.4"
   },
   "dependencies": {
-    "express": "^4.19.2"
-  },
-  "babel": {
-    "presets" : [
-      [
-        "@babel/preset-env",
-        {
-          "targets": {
-            "node": "current"
-          }
-        }
-      ]
-    ],
-    "plugins": [
-      "babel-plugin-transform-import-meta"
-    ]
+    "express": "^4.19.2",
+    "joi": "^17.12.3",
+    "uuid": "^9.0.1"
   }
 }

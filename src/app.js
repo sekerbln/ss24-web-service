@@ -2,12 +2,15 @@ import express from "express"
 import path from 'path';
 import { fileURLToPath } from 'url';
 import * as fs from "fs";
+import {v4 as uuid} from 'uuid';
+import avatarSchema from "./avatar.schema.js";
+
 
 // if import.meta.url is set we take the module dir from other, otherwise from  __dirname
 const module_dir = import.meta.url ?  path.dirname(fileURLToPath(import.meta.url)) : __dirname;
 
 // create the data file in current working directory (cwd) if it does not yet exist
-const data_file = path.join(process.cwd(),'avatars.json');
+const data_file = path.join(process.cwd(), 'avatars.json');
 if (!fs.existsSync(data_file)) {
     fs.writeFileSync(data_file, JSON.stringify([]))
 };
@@ -22,12 +25,13 @@ app.get('/', function (req, res) {
 
 app.post('/api/avatars', (req, res)=>{
     console.log(" POST /api/avatars")
-    let newAvatar = req.body
 
-    if(typeof newAvatar.childAge !== 'number'){
-        response.sendStatus(400)
+    const {error, value} = avatarSchema.validate(req.body);
+
+    if(error){
+        res.status(400).send(error)
+        return
     }
-
 
     newAvatar = {
         id: Date.now(),
@@ -64,6 +68,14 @@ app.get("/api/avatars/:id", (req, res)=>{
 
 app.put("/api/avatars/:id", async (req, res)=>{
     try {
+
+        const {error, value} = avatarSchema.validate(req.body, {abortEarly: false});
+
+        if(error){
+            res.status(400).send(error)
+            return
+        }
+
         const data = fs.readFileSync(data_file);
         const avatars = JSON.parse(data);
 
