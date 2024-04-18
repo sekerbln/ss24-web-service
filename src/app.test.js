@@ -14,7 +14,6 @@ describe('avatar api', () => {
         "lowerClothing": "shorts"
     }
 
-
     test('create avatar', async () => {
         const createResponse = await request(app)
             .post('/api/avatars')
@@ -66,6 +65,22 @@ describe('avatar api', () => {
         );
     });
 
+    test('create avatar requires at least avatar name and child\'s age', async () => {
+
+        const testData = {
+            "skinColor": "#0000ff",
+            "hairstyle": "short",
+            "headShape": "oval",
+            "upperClothing": "jacket",
+            "lowerClothing": "shorts"
+        }
+
+        const createResponse = await request(app)
+            .post('/api/avatars')
+            .send(testData)
+            .set('Accept', 'application/json')
+            .expect(400);
+    });
 
 });
 

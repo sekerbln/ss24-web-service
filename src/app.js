@@ -33,9 +33,9 @@ app.post('/api/avatars', (req, res)=>{
         return
     }
 
-    newAvatar = {
-        id: Date.now(),
-        ...newAvatar,
+    const newAvatar = {
+        id: uuid(),
+        ...value,
         createdAt: new Date(Date.now()).toISOString()
     }
 
