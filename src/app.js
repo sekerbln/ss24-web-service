@@ -3,13 +3,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import * as fs from "fs";
 
-if(import.meta.url){
-    // if import.meta.url is set we override the nodejs globals __filename and __dirname
-    __filename = fileURLToPath(import.meta.url);
-    __dirname = path.dirname(__filename);
-}
+// if import.meta.url is set we take the module dir from other, otherwise from  __dirname
+const module_dir = import.meta.url ?  path.dirname(fileURLToPath(import.meta.url)) : __dirname;
 
-// create the data file if it does not yet exist
+// create the data file in current working directory (cwd) if it does not yet exist
 const data_file = path.join(process.cwd(),'avatars.json');
 if (!fs.existsSync(data_file)) {
     fs.writeFileSync(data_file, JSON.stringify([]))
@@ -17,7 +14,7 @@ if (!fs.existsSync(data_file)) {
 
 const app = express()
 
-app.use(express.static(path.join(__dirname, 'public')))
+app.use(express.static(path.join(module_dir, 'public')))
 app.use(express.json())
 app.get('/', function (req, res) {
     res.sendFile(`index.html`)
@@ -26,6 +23,12 @@ app.get('/', function (req, res) {
 app.post('/api/avatars', (req, res)=>{
     console.log(" POST /api/avatars")
     let newAvatar = req.body
+
+    if(typeof newAvatar.childAge !== 'number'){
+        response.sendStatus(400)
+    }
+
+
     newAvatar = {
         id: Date.now(),
         ...newAvatar,
