@@ -1,34 +1,61 @@
 import express from "express"
 import path from 'path';
-import { fileURLToPath } from 'url';
+import {fileURLToPath} from 'url';
 import * as fs from "fs";
+
 import {v4 as uuid} from 'uuid';
+import passport from 'passport'
+import {Strategy} from 'passport-http-bearer'
+
 import avatarSchema from "./avatar.schema.js";
 
 
 // if import.meta.url is set we take the module dir from other, otherwise from  __dirname
-const module_dir = import.meta.url ?  path.dirname(fileURLToPath(import.meta.url)) : __dirname;
+const module_dir = import.meta.url ? path.dirname(fileURLToPath(import.meta.url)) : __dirname;
 
 // create the data file in current working directory (cwd) if it does not yet exist
 const data_file = path.join(process.cwd(), 'avatars.json');
 if (!fs.existsSync(data_file)) {
     fs.writeFileSync(data_file, JSON.stringify([]))
-};
+}
+
+const user_file = path.join(process.cwd(), 'users.json');
+if (!fs.existsSync(user_file)) {
+    fs.writeFileSync(user_file, JSON.stringify([]))
+}
+
 
 const app = express()
 
+passport.use(new Strategy(
+    function (token, done) {
+        try {
+            const users = JSON.parse(fs.readFileSync(user_file, 'utf8'))
+            const user = users.find(user => user.token === token);
+            if (user) {
+                done(null, user);
+            } else {
+                done(null, false);
+            }
+        } catch (err) {
+            done(err);
+        }
+    }));
+
 app.use(express.static(path.join(module_dir, 'public')))
 app.use(express.json())
+app.use(passport.authenticate('bearer', {session: false}));
+
 app.get('/', function (req, res) {
     res.sendFile(`index.html`)
 })
 
-app.post('/api/avatars', (req, res)=>{
+app.post('/api/avatars', (req, res) => {
     console.log(" POST /api/avatars")
 
     const {error, value} = avatarSchema.validate(req.body);
 
-    if(error){
+    if (error) {
         res.status(400).send(error)
         return
     }
@@ -40,38 +67,40 @@ app.post('/api/avatars', (req, res)=>{
     }
 
     try {
-        const obj =  JSON.parse(fs.readFileSync(data_file, "utf8"))
+        const obj = JSON.parse(fs.readFileSync(data_file, "utf8"))
 
         fs.writeFileSync(data_file, JSON.stringify([...obj, newAvatar]))
         res.status(201).set("Location", `/api/avatars/${newAvatar.id}`).send(newAvatar)
-    }catch (e){
+    } catch (e) {
         res.sendStatus(500)
     }
 })
 
-app.get("/api/avatars", (req, res)=>{
-    console.log(" GET /api/avatars")
-    const avatarsArray =  JSON.parse(fs.readFileSync(data_file, "utf8"))
-    res.send(avatarsArray)
-})
+app.get(
+    "/api/avatars",
+    (req, res) => {
+        console.log(" GET /api/avatars")
+        const avatarsArray = JSON.parse(fs.readFileSync(data_file, "utf8"))
+        res.send(avatarsArray)
+    })
 
-app.get("/api/avatars/:id", (req, res)=>{
-    const avatarID = parseInt(req.params.id)
+app.get("/api/avatars/:id", (req, res) => {
+    const avatarID = req.params.id;
     console.log(` GET /api/avatars/:${avatarID}`)
-    const avatarsArray =  JSON.parse(fs.readFileSync(data_file, "utf8"))
-    const avatar = avatarsArray.find((av)=>av.id===avatarID)
-    if(!avatar)
+    const avatarsArray = JSON.parse(fs.readFileSync(data_file, "utf8"))
+    const avatar = avatarsArray.find((av) => av.id === avatarID)
+    if (!avatar)
         res.sendStatus(404)
     else
         res.send(avatar)
 })
 
-app.put("/api/avatars/:id", async (req, res)=>{
+app.put("/api/avatars/:id", async (req, res) => {
     try {
 
         const {error, value} = avatarSchema.validate(req.body, {abortEarly: false});
 
-        if(error){
+        if (error) {
             res.status(400).send(error)
             return
         }
@@ -102,14 +131,14 @@ app.put("/api/avatars/:id", async (req, res)=>{
     }
 })
 
-app.delete("/api/avatars/:id", (req, res)=>{
+app.delete("/api/avatars/:id", (req, res) => {
     const avatarID = parseInt(req.params.id)
     console.log(` DELETE /api/avatars/:${avatarID}`)
-    const avatarsArray =  JSON.parse(fs.readFileSync(data_file, "utf8"))
-    const avatar = avatarsArray.findIndex((av)=>av.id===avatarID)
-    if(avatar===-1)
+    const avatarsArray = JSON.parse(fs.readFileSync(data_file, "utf8"))
+    const avatar = avatarsArray.findIndex((av) => av.id === avatarID)
+    if (avatar === -1)
         res.sendStatus(404)
-    else{
+    else {
         avatarsArray.splice(avatar, 1)
         fs.writeFileSync(data_file, JSON.stringify(avatarsArray), (err) => {
             if (err) {

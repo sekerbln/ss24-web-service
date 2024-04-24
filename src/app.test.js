@@ -22,7 +22,7 @@ describe('avatar api', () => {
             .expect(201);
 
         expect(createResponse.body).toMatchObject(TEST_DATA);
-        expect(createResponse.body.id).toBeGreaterThan(0);
+        expect(createResponse.body.id).toBeDefined();
         expect(createResponse.body.createdAt).toBeDefined();
 
         const newAvatarId = createResponse.body.id;
