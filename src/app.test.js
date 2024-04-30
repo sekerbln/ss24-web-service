@@ -15,6 +15,8 @@ describe('avatar api', () => {
     }
 
 
+
+
     test('create avatar', async () => {
         const createResponse = await request(app)
             .post('/api/avatars')
@@ -34,6 +36,22 @@ describe('avatar api', () => {
         // expect on response2
     });
 
+    test('create avatar requires at least name and childAge', async () => {
+
+        const test_data1 = {
+            "skinColor": "#0000ff",
+            "hairstyle": "short",
+            "headShape": "oval",
+            "upperClothing": "jacket",
+            "lowerClothing": "shorts"
+        }
+
+        const createResponse = await request(app)
+            .post('/api/avatars')
+            .send(test_data1)
+            .set('Accept', 'application/json')
+            .expect(400);
+    })
 
 });
 
